@@ -1,0 +1,181 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+	    <meta charset="utf-8" />
+	    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+	    <title>Dashboard</title> 
+	    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.8.0.min.js"></script>
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
+
+<script>
+	  
+
+	    	var Bin1_lineCharObj = null;
+	    	var Bin2_lineCharObj = null;
+			
+			var Bin1_pieChartObj = null;
+			var Bin2_pieChartObj = null;
+
+
+			var Bin1WeekChartData = [];
+	    	var	Bin2WeekChartData = [];
+	    	var	Bin1ChartData = [0,0];
+	    	var	Bin2ChartData = [0,0];
+			
+			var dataTime = [];
+
+			var wsbroker = "34.226.134.195";  //mqtt websocket enabled broker
+				var wsport = 3033 // port for above
+				    
+				var client = new Paho.MQTT.Client(wsbroker, wsport,
+				        "myclientid_" + parseInt(Math.random() * 100, 10));
+				    
+				    client.onConnectionLost = function (responseObject) {
+				      console.log("connection lost: " + responseObject.errorMessage);
+				};
+
+				    
+				    
+				var options = {
+				      timeout: 3,
+				      onSuccess: function () {
+				        console.log("mqtt connected");
+				       
+				        // Connection succeeded; subscribe to our topic, you can add multile lines of these
+				        
+				        
+				        client.subscribe('smart-demo-T6', {qos: 1});
+				        
+
+
+				        },
+				      
+				      onFailure: function (message) {
+				        console.log("Connection failed: " + message.errorMessage);
+				      }
+				    };          
+
+				
+				
+    		
+    		
+			$(document).ready(function() {
+						    
+	
+				    client.onMessageArrived = function (message) {
+				    	console.log("hey");
+				      	console.log(message.destinationName, ' -- ', message.payloadString);
+				      	var obj = JSON.parse(message.payloadString);
+				      	console.log(obj);
+				      	if (message.destinationName == "smart-demo-T6"){
+				      		Bin1ChartData = obj;
+				      		liveGraph(Bin1ChartData)
+				      	}
+
+				      	
+				    };
+
+
+	
+
+	function liveGraph(Bin1Data,Bin2Data){
+
+		var bin1_piecontent = document.getElementById("Bin1live");
+		
+		// colour codes 
+		// #228B22 - green
+		// "#D3D3D3" - grey
+		 // #FFA500   - orange 
+
+		Bin1ChartData = [30-Bin1Data,Bin1Data];
+		
+
+		bin1_backgroundcolour = [0,"#D3D3D3"];
+		console.log(Bin1ChartData);
+
+		if (Bin1Data > 20 && Bin1Data < 26){
+			bin1_backgroundcolour[0] = "#228B22";
+		}
+
+		if (Bin1Data > 10 && Bin1Data < 20){
+			bin1_backgroundcolour[0] = "#FFA500";
+			
+		}
+
+		if (Bin1Data > 0 && Bin1Data < 10){
+			bin1_backgroundcolour[0] = "#ff0000";
+		}
+
+		
+
+		console.log(bin1_backgroundcolour);
+
+		
+				    var bin1_data = {
+				        datasets: [{
+					        data: Bin1ChartData,
+					        backgroundColor: bin1_backgroundcolour,
+					        label: 'Bin1' // for legend
+				        }],
+				        labels: [
+					        "Bin Filled",
+					        "Bin Vacant"
+				        ]
+				    };
+
+				    if(Bin1_pieChartObj){
+				        Bin1_pieChartObj.destroy();
+				    }
+		
+				    var Bin1_pieChartObj = new Chart(bin1_piecontent, {
+				        data: bin1_data,
+				        type: 'doughnut',
+				        options: {
+				          legend: true
+				        }
+				    });
+
+			}
+
+	client.connect(options);
+
+
+		// ========================== TESTING PURPOSE
+		liveGraph(0,0);
+		// ==========================
+    				
+		});
+	    </script>
+	</head>
+	<style type="text/css">
+	</style>
+	<body>
+		<div class="container">
+			
+
+			
+			<h2 style="text-align:center;"><STRONG>SMART CITY TRASH BIN MONITORING SYSTEM</STRONG><h2>
+			<h4 style="text-align:center;"><STRONG> ADITYA ENGINEERING COLLEGES </STRONG><h4>
+			<h4 style="text-align:center;"><STRONG>Installed Locations :  1) ACET Seminar Hall</STRONG><h4>
+		    
+		    <div class="row">
+			    
+		    	
+			    
+			    <div id="Bin1" class="col-sm-6 col-md-6 col-lg-6">
+			        <h3 style="text-align:center;">Bin1 : ACET Seminar Hall </h3><br>
+			        <canvas id="Bin1live" width="400" height="250"></canvas>
+			    </div>
+			    
+		
+		    </div>
+
+		    
+		    
+		</div>
+	</body>
+</html>
